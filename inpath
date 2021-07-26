@@ -1,0 +1,52 @@
+#!/bin/bash
+# inpath-- 驗證指定的程式是否有效，或者從PATH環境變數中查找
+#
+
+in_path()
+{
+	# 指定一指令或PATH變數，若找到指令且可執行將回傳0；
+	# 若不是則回傳1。
+	# 注意，他會暫時修改IFS(欄位分割符號)，執行完後須回復。
+	
+	cmd=$1	ourpath=$2	result=1
+	oldIFS=$IFS	IFS=":"
+
+	for directory in "ourpath"
+	do
+		if [ -x $directory/$cmd ]; then
+			result=0	#如果執行到這，表找到指定的指令。
+		fi
+	done
+
+	IFS=$oldIFS
+	return $result
+}
+
+checkForCmdInPath()
+{
+	var=$1
+
+	if [ "$var" != "" ]; then
+		if [ "${var:0:1}" = "/" ]; then
+			if [ ! -x $var ]; then
+				return 1
+			fi
+		elif ! in_path $var "$PATH" ; then
+			return 2
+		fi
+	fi
+}
+####################################
+if [ $# -ne 1 ]; then
+	echo "執行方式: $0 command" >&2
+	exit 1
+fi
+
+checkForCmdInPath "$1"
+case $? in
+	0) echo "$1 存在 PATH的路徑清單中"	;;
+	1) echo "$1 找不到或不是執行檔"		;;
+	2) echo "$1 不再 PATH的路徑清單中"	;;
+esac
+
+exit 0
